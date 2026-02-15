@@ -1,14 +1,12 @@
-use std::process::exit;
-use log::{info, trace, warn, error, debug};
+use log::{debug, error, trace, warn};
 
-use windows::Win32::Foundation::HANDLE;
-use crate::core::handle::{get_extended_handle_info, get_type_index_by_name, HANDLES, HANDLE_TYPES, TYPE_INDEX_TABLE};
-use crate::core::permission::get_lsass_min_permissions;
-use crate::core::process::{get_all_process_except};
-use crate::nt::ntdll::{NtDuplicateObject};
-use crate::nt::status::nt_success;
+use crate::core::handle::{get_extended_handle_info, get_type_index_by_name, HANDLES, HANDLE_TYPES};
+use crate::core::process::get_all_process_except;
+use crate::nt::ntdll::nt_success;
 use crate::nt::system::{get_process_handle, NtOpenProcessAccess};
+use crate::syscall::syscalls::NtDuplicateObject;
 use crate::utils::utils::is_lsass;
+use windows::Win32::Foundation::HANDLE;
 
 const NT_CURRENT_PROCESS: HANDLE = HANDLE(-1isize as *mut core::ffi::c_void);
 

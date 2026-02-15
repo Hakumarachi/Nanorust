@@ -1,6 +1,6 @@
+use crate::nt::dump::model::ProcessArchitecture::AMD64;
 use std::arch::asm;
 use windows::Win32::Foundation::HANDLE;
-use crate::nt::dump::model::ProcessArchitecture::AMD64;
 
 pub const MINIDUMP_SIGNATURE: u32 = 0x504D444D; // 'MDMP'
 pub const MINIDUMP_VERSION: u16 = 42899;

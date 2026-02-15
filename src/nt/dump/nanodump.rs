@@ -1,17 +1,16 @@
-use std::ffi::c_void;
-use std::ptr::null_mut;
-use log::{debug, error};
-use ntapi::ntmmapi::{MEMORY_INFORMATION_CLASS};
-use windows::Win32::Foundation::{STATUS_PARTIAL_COPY, UNICODE_STRING};
-use windows::Win32::System::Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, MEM_IMAGE, MEM_MAPPED, PAGE_EXECUTE, PAGE_GUARD, PAGE_NOACCESS};
-use windows_sys::Win32::System::SystemServices::VER_NT_WORKSTATION;
-use crate::nt::dump::model::IMPORTANT_MODULES;
 use crate::nt::dump::model;
+use crate::nt::dump::model::IMPORTANT_MODULES;
 use crate::nt::dump::model::*;
 use crate::nt::dump::modules::{find_modules, ModuleInfo};
-use crate::nt::ntdll::{NtReadVirtualMemory, NtQueryVirtualMemory};
-use crate::nt::status::nt_success;
-use crate::utils::utils::{unicode_to_string, write_buffer};
+use crate::nt::system::{query_virtual_memory, read_virtual_memory};
+use crate::utils::utils::unicode_to_string;
+use log::{debug, error};
+use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
+use std::ffi::c_void;
+use std::ptr::read_unaligned;
+use windows::Win32::Foundation::UNICODE_STRING;
+use windows::Win32::System::Memory::{MEMORY_BASIC_INFORMATION, MEM_COMMIT, MEM_IMAGE, MEM_MAPPED, PAGE_EXECUTE, PAGE_GUARD, PAGE_NOACCESS};
+use windows_sys::Win32::System::SystemServices::VER_NT_WORKSTATION;
 
 pub fn nano_dump_write_dump(dc: &mut DumpContext) -> Result<(), DumpError> {
     debug!("Writing nanodump");
@@ -392,54 +391,28 @@ fn write_memory64_list_stream(dc: &mut DumpContext, modules: Vec<ModuleInfo>) ->
     dc.write_at((SIZE_OF_HEADER + SIZE_OF_DIRECTORY * 2 + 8) as u32, &stream_rva.to_le_bytes()).ok();
 
     for range in memory_ranges.iter_mut() {
-        let mut buffer = vec![0u8; range.data_size as usize];
-        let mut bytes_read: usize = 0;
-        unsafe {
-            let status = NtReadVirtualMemory(
-                dc.h_process,
-                range.start_of_memory_range as *const c_void,
-                buffer.as_mut_ptr() as *mut _,
-                range.data_size as usize,
-                &mut bytes_read as *mut usize,
-            );
 
-            if status == STATUS_PARTIAL_COPY {
-                debug!(
-                    "Partial read at 0x{:x}: read {} / {} bytes",
-                    range.start_of_memory_range,
-                    bytes_read,
-                    range.data_size
-                );
-            } else if !nt_success(status) {
-                error!(
-                    "Failed to read memory range: \
-                     StartOfMemoryRange: 0x{:x}, \
-                     DataSize: 0x{:x}, \
-                     State: 0x{:x}, \
-                     Protect: 0x{:x}, \
-                     Type: 0x{:x}, \
-                     NtReadVirtualMemory status: 0x{:?}. Continuing anyways...",
-                    range.start_of_memory_range,
-                    range.data_size,
-                    range.state,
-                    range.protect,
-                    range.typ,
-                    status
-                );
-                return false
-            }
-            if range.data_size > 0xffffffff {
-                error!("The current range is larger that the 32-bit address space!");
-                range.data_size = 0xffffffff;
-            }
+        let ret = read_virtual_memory(dc.h_process, range.start_of_memory_range as *mut c_void, range.data_size as usize);
 
-            if dc.append(&buffer[..bytes_read]).is_err()
-            {
-                error!("Failed to write the Memory64ListStream");
-                return false
-            }
-            buffer.clear();
+        if ret.is_none(){
+            error!("Failed to read memory range");
+            return false
         }
+
+        let (mut buffer, bytes_read)  = ret.unwrap();
+
+        if range.data_size > 0xffffffff {
+            error!("The current range is larger that the 32-bit address space!");
+            range.data_size = 0xffffffff;
+        }
+
+        if dc.append(&buffer[..bytes_read]).is_err()
+        {
+            error!("Failed to write the Memory64ListStream");
+            return false
+        }
+        buffer.clear();
+
     }
     true
 }
@@ -451,29 +424,29 @@ fn get_memory_ranges(dc: &mut DumpContext, modules: Vec<ModuleInfo>) -> Option<V
     let mut region_size : usize;
     let mut current_address : usize = 0;
     let mic : MEMORY_INFORMATION_CLASS = 0;
-    let mut mbi : MEMORY_BASIC_INFORMATION = MEMORY_BASIC_INFORMATION::default();
+    let mut mbi : MEMORY_BASIC_INFORMATION;
 
     let mut range_list : Vec<MiniDumpMemoryDescriptor64> = Vec::new();
 
     loop {
         unsafe {
-            let status = NtQueryVirtualMemory(
-                dc.h_process,
-                current_address as *mut c_void,
-                mic,
-                &mut mbi as *mut _ as *mut c_void,
-                size_of::<MEMORY_BASIC_INFORMATION>(),
-                null_mut()
-            );
+            let buffer = query_virtual_memory(dc.h_process,current_address as _, mic);
 
-            if !nt_success(status) {
+            if buffer.is_none(){
                 break
             }
+
+            let buffer = buffer?;
+
+            mbi = unsafe {
+                read_unaligned(buffer.as_ptr() as *const MEMORY_BASIC_INFORMATION)
+            };
 
             base_address = mbi.BaseAddress;
             region_size = mbi.RegionSize;
 
-            if base_address as usize+ region_size < base_address as usize {
+
+            if base_address as usize + region_size < base_address as usize {
                 break
             }
 

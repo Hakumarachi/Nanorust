@@ -1,9 +1,9 @@
-use log::{debug};
+use log::debug;
 
+use crate::nt::structs::{OBJECT_TYPES_INFORMATION, OBJECT_TYPE_INFORMATION, SYSTEM_HANDLE_INFORMATION_EX, SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX};
+use crate::nt::system::{query_object, query_system_info, NtQueryObjectClasses, NtQuerySystemInformationClasses};
 use std::collections::HashMap;
 use std::mem::size_of;
-use crate::nt::system::{query_object, query_system_info, NtQueryObjectClasses, NtQuerySystemInformationClasses};
-use crate::nt::model::{OBJECT_TYPES_INFORMATION, OBJECT_TYPE_INFORMATION, SYSTEM_HANDLE_INFORMATION_EX, SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX};
 
 pub static mut HANDLES: Option<Vec<SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX>> = None;
 pub static mut TYPE_INDEX_TABLE: Option<HashMap<u16, String>> = None;

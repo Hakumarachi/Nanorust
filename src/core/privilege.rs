@@ -1,9 +1,9 @@
+use windows::core::w;
 use windows::Win32::Foundation::{CloseHandle, LUID};
-use windows::Win32::Security::{AdjustTokenPrivileges, LookupPrivilegeValueW, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY, SE_PRIVILEGE_ENABLED, GetTokenInformation, TokenPrivileges, SE_DEBUG_NAME, LUID_AND_ATTRIBUTES};
+use windows::Win32::Security::{AdjustTokenPrivileges, GetTokenInformation, LookupPrivilegeValueW, TokenPrivileges, LUID_AND_ATTRIBUTES, SE_DEBUG_NAME, SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY};
 use windows::Win32::System::Threading::{
     GetCurrentProcess, OpenProcessToken,
 };
-use windows::core::{w};
 
 pub fn enable_debug_privilege() -> bool {
     unsafe {

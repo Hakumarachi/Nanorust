@@ -1,9 +1,9 @@
-use std::ffi::c_void;
+use crate::nt::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
+use std::ffi::c_void;
 use windows::Win32::Foundation::{HANDLE, NTSTATUS};
-use crate::nt::model::{CLIENT_ID, OBJECT_ATTRIBUTES};
 
-pub const NtCurrentProcess: HANDLE = HANDLE(-1isize as *mut c_void);
+pub const NT_CURRENT_PROCESS: HANDLE = HANDLE(-1isize as *mut c_void);
 
 
 #[link(name = "ntdll")]
@@ -73,3 +73,6 @@ extern "system" {
     ) -> NTSTATUS;
 }
 
+pub fn nt_success(status: NTSTATUS) -> bool {
+    status.0 >= 0
+}
