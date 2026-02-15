@@ -160,16 +160,6 @@ pub fn get_cstr_len(pointer: *const char) -> usize {
     (tmp - pointer as u64) as _
 }
 
-/// Checks to see if the architecture x86 or x86_64
-pub fn is_wow64() -> bool {
-    // A usize is 4 bytes on 32 bit and 8 bytes on 64 bit
-    if std::mem::size_of::<usize>() == 4 {
-        return false;
-    }
-
-    true
-}
-
 #[allow(dead_code)]
 /// Extracts the system call number from the specfied function pointer (not required in this program)
 fn find_syscall_number(function_ptr: *mut u8) -> u16 {
