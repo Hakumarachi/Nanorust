@@ -3,9 +3,6 @@
 </p>
 
 <p align="center">
-  <b>Nanorust</b> — A complete rewrite of 
-  <a href="https://github.com/fortra/nanodump">nanodump</a> in Rust.
-  <br>
   <img src="https://img.shields.io/github/v/release/Hakumarachi/Nanorust" alt="Latest release">
   <a href="https://twitter.com/intent/follow?screen_name=Akumarachi">
     <img src="https://img.shields.io/twitter/follow/Akumarachi?label=Akumarachi&style=social" alt="Twitter Follow">
