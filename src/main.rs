@@ -16,7 +16,7 @@ use crate::utils::utils::{get_full_path, write_buffer};
 use log::{debug, error, info};
 use core::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
 use std::process::exit;
-use crate::cli::header::build_header;
+use crate::cli::banner::build_header;
 use crate::core::dump::model::DumpError;
 
 fn main() {
