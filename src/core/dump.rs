@@ -1,4 +1,4 @@
-use log::{debug, error, trace, warn};
+use log::{debug, trace, warn};
 
 use crate::core::handle::{get_extended_handle_info, get_type_index_by_name, HANDLES, HANDLE_TYPES};
 use crate::core::process::get_all_process_except;

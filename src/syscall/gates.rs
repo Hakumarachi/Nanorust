@@ -44,14 +44,6 @@ pub unsafe fn get_nt_headers(module_base: *mut u8) -> Option<*mut IMAGE_NT_HEADE
     Some(nt_headers)
 }
 
-/// Gets a pointer to the Thread Environment Block (TEB)
-#[cfg(target_arch = "x86")]
-pub unsafe fn get_teb() -> *mut ntapi::ntpebteb::TEB {
-    let teb: *mut ntapi::ntpebteb::TEB;
-    asm!("mov {teb}, fs:[0x18]", teb = out(reg) teb);
-    teb
-}
-
 /// Get a pointer to the Thread Environment Block (TEB)
 #[cfg(target_arch = "x86_64")]
 pub unsafe fn get_teb() -> *mut ntapi::ntpebteb::TEB {

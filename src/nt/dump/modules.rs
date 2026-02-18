@@ -34,15 +34,8 @@ impl ModuleInfo {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
 const LDR_POINTER_OFFSET : usize = 0x18;
-#[cfg(target_arch = "x86_64")]
 const MODULE_LIST_POINTER_OFFSET : usize =  0x10;
-
-#[cfg(target_arch = "x86")]
-const LDR_POINTER_OFFSET : usize = 0xc;
-#[cfg(target_arch = "x86")]
-const MODULE_LIST_POINTER_OFFSET : usize =  0xc;
 
 #[cfg(feature = "ssp")]
 fn get_peb_address(h_process: HANDLE) -> *const u8 {

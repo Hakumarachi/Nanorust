@@ -18,6 +18,7 @@ use crate::utils::utils::{get_full_path, write_buffer};
 use log::{debug, error, info};
 use nt::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
 use std::process::exit;
+use crate::cli::header::build_header;
 
 fn main() {
     let args = parse_args();
@@ -34,6 +35,8 @@ fn main() {
     };
 
     env_logger::Builder::from_default_env().filter_level(log_level).init();
+    
+    info!("{}",build_header());
 
     //it_works();
     //exit(0);
