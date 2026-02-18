@@ -8,7 +8,6 @@ pub const SIZE_OF_MINIDUMP_MODULE: usize = 108;
 pub const SIZE_OF_HEADER :usize = 32;
 pub const SIZE_OF_DIRECTORY :usize = 12;
 
-#[cfg(target_arch = "x86_64")]
 const PEB_OFFSET: usize = 0x60;
 
 enum ProcessArchitecture {
@@ -16,21 +15,13 @@ enum ProcessArchitecture {
 }
 
 // x64
-#[cfg(target_arch = "x86_64")]
 pub const PROCESS_PARAMETERS_OFFSET: usize = 0x20;
-#[cfg(target_arch = "x86_64")]
 pub const OS_MAJOR_VERSION_OFFSET: usize = 0x118;
-#[cfg(target_arch = "x86_64")]
 pub const OS_MINOR_VERSION_OFFSET: usize = 0x11C;
-#[cfg(target_arch = "x86_64")]
 pub const OS_BUILD_NUMBER_OFFSET: usize = 0x120;
-#[cfg(target_arch = "x86_64")]
 pub const OS_PLATFORM_ID_OFFSET: usize = 0x124;
-#[cfg(target_arch = "x86_64")]
 pub const CSD_VERSION_OFFSET: usize = 0x2e8;
-#[cfg(target_arch = "x86_64")]
 pub const PROCESSOR_ARCHITECTURE: usize = ProcessArchitecture::AMD64 as usize;
-#[cfg(target_arch = "x86_64")]
 pub const SIZE_OF_SYSTEM_INFO_STREAM: usize = 48;
 
 pub enum MiniDumpType {

@@ -1,5 +1,6 @@
 use crate::syscall::gates::*;
 use std::collections::HashMap;
+use log::debug;
 
 static mut NTDLL_BASE: *mut u8 = std::ptr::null_mut();
 

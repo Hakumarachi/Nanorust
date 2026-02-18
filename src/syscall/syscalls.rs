@@ -1,4 +1,4 @@
-use crate::nt::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
+use crate::core::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
 use crate::syscall::resolver::get_syscall;
 use crate::syscall::runner::run_syscall10;
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;

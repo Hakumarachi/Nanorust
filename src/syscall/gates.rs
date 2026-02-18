@@ -12,7 +12,7 @@ use windows_sys::Win32::System::{
     },
 };
 
-/// Get process ID by name
+/// Get core ID by name
 pub fn get_process_id_by_name(target_process: &str) -> usize {
     let mut system = System::new();
     system.refresh_all();

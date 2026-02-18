@@ -1,5 +1,5 @@
-use crate::nt::dump::model::rva;
-use crate::nt::system::{get_process_image, read_virtual_memory};
+use crate::core::dump::model::rva;
+use crate::syscall::system::{get_process_image, read_virtual_memory};
 use core::ffi::c_void;
 use log::{debug, error};
 use ntapi::ntldr::LDR_DATA_TABLE_ENTRY;
@@ -11,13 +11,13 @@ use windows::Win32::System::Threading::PROCESS_BASIC_INFORMATION;
 
 const MAX_PATH: usize = 260;
 
-#[repr(C)] // pour que l'alignement et l'ordre des champs soient compatibles C
+#[repr(C)]
 pub struct ModuleInfo {
-    pub dll_base: u64,               // ULONG64
-    pub size_of_image: u32,          // ULONG32
-    pub dll_name: [u16; 260],         // char[512]
-    pub name_rva: u32,               // ULONG32
-    pub time_date_stamp: u32,        // ULONG32
+    pub dll_base: u64,
+    pub size_of_image: u32,
+    pub dll_name: [u16; 260],
+    pub name_rva: u32,
+    pub time_date_stamp: u32,
     pub check_sum: u32,
 }
 
@@ -205,6 +205,10 @@ pub fn find_modules(h_process : HANDLE, important_modules : Vec<&str>, is_lsass:
     debug!("Number of modules: {}", important_modules.len() );
 
     let ldr_entry_address = get_module_list_address(h_process, is_lsass);
+
+    if ldr_entry_address == 0 {
+        return None;
+    }
 
     debug!("ldr_entry_address: {:?}", ldr_entry_address);
 

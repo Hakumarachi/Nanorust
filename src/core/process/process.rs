@@ -3,9 +3,9 @@ use std::mem::size_of;
 use windows::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Foundation::UNICODE_STRING;
 
-use crate::core::model::ProcessInfo;
-use crate::nt::structs::SYSTEM_PROCESS_INFORMATION;
-use crate::nt::system::{get_process_image, query_system_info, NtQuerySystemInformationClasses};
+use crate::core::process::model::ProcessInfo;
+use crate::core::structs::SYSTEM_PROCESS_INFORMATION;
+use crate::syscall::system::{get_process_image, query_system_info, NtQuerySystemInformationClasses};
 use crate::utils::utils::unicode_to_string;
 
 pub static mut PROCESSES: Option<Vec<ProcessInfo>> = None;

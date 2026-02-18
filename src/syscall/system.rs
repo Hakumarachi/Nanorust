@@ -1,5 +1,5 @@
-use crate::nt::ntdll::nt_success;
-use crate::nt::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
+use crate::utils::utils::nt_success;
+use crate::core::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
 use crate::syscall::syscalls::{NtOpenProcess, NtQueryInformationProcess, NtQueryObject, NtQuerySystemInformation, NtQueryVirtualMemory, NtReadVirtualMemory};
 use log::{error, debug};
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
@@ -214,6 +214,7 @@ pub fn read_virtual_memory(h_process: HANDLE, base_addr: *mut c_void, size : usi
                 );
                 return Some((buffer, return_len));
             }
+            debug!("status: {:x}", status.0);
         }
     None
 }

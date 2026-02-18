@@ -1,8 +1,8 @@
-use crate::nt::dump::model;
-use crate::nt::dump::model::IMPORTANT_MODULES;
-use crate::nt::dump::model::*;
-use crate::nt::dump::modules::{find_modules, ModuleInfo};
-use crate::nt::system::{query_virtual_memory, read_virtual_memory};
+use crate::core::dump::model;
+use crate::core::dump::model::IMPORTANT_MODULES;
+use crate::core::dump::model::*;
+use crate::core::dump::modules::{find_modules, ModuleInfo};
+use crate::syscall::system::{query_virtual_memory, read_virtual_memory};
 use crate::utils::utils::unicode_to_string;
 use log::{debug, error};
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
@@ -27,11 +27,11 @@ pub fn nano_dump_write_dump(dc: &mut DumpContext) -> Result<(), DumpError> {
 
     if modules.is_none() {
         error!("No modules found");
-        return Err(DumpError::WriteFailed)
+        return Err(DumpError::InvalidState)
     }
 
     if !write_memory64_list_stream(dc, modules.unwrap()){
-        return Err(DumpError::WriteFailed)
+        return Err(DumpError::InvalidState)
     }
 
     Ok(())
@@ -216,7 +216,6 @@ fn write_module_list_stream(dc: &mut DumpContext) -> Option<Vec<ModuleInfo>> {
     let module_list = find_modules(dc.h_process, IMPORTANT_MODULES.to_vec(), true);
 
     if module_list.is_none() {
-        error!("No modules found");
         return None;
     }
 

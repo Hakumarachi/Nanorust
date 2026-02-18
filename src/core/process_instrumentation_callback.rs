@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use std::ptr::null_mut;
 use log::{debug, error};
 use crate::syscall::syscalls::{NtSetInformationProcess, NT_CURRENT_PROCESS};
-use crate::nt::ntdll::nt_success;
+use crate::utils::utils::nt_success;
 
 const PROCESS_INSTRUMENTATION_CALLBACK: u32 = 40;
 

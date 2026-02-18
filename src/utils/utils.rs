@@ -1,4 +1,4 @@
-use windows::Win32::Foundation::UNICODE_STRING;
+use windows::Win32::Foundation::{NTSTATUS, UNICODE_STRING};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -18,17 +18,17 @@ pub fn unicode_to_string(u: &UNICODE_STRING) -> String {
     String::from_utf16_lossy(slice)
 }
 
-use windows::Win32::Foundation::{HANDLE};
-use log::{error, info, debug};
+use windows::Win32::Foundation::HANDLE;
+use log::{debug, error, info};
 use crate::core::process::get_process_image_file_name;
 
-pub unsafe fn is_lsass(hprocess: HANDLE) -> bool {
+pub unsafe fn is_lsass(h_process: HANDLE) -> bool {
     let file_name = get_process_image_file_name(
-        hprocess
+        h_process
     );
 
     if file_name.is_none() {
-        error!("Failed to get process image file name");
+        error!("Failed to get core image file name");
         return false;
     }
 
@@ -62,6 +62,6 @@ pub fn write_buffer(path: &str, buffer: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
-
-
-
+pub fn nt_success(status: NTSTATUS) -> bool {
+    status.0 >= 0
+}

