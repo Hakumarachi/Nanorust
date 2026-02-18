@@ -1,8 +1,8 @@
-<p style="text-align: center;">
+<p align="center">
   <img src="./.github/banner.png" alt="Nanorust banner">
 </p>
 
-<p style="text-align: center;">
+<p align="center">
   <b>Nanorust</b> — A complete rewrite of 
   <a href="https://github.com/fortra/nanodump">nanodump</a> in Rust.
   <br>
@@ -13,7 +13,7 @@
 </p>
 
 ---
-<p style="text-align: center;">
+<p align="center">
 Rust rewrite of <b><a href="https://github.com/fortra/nanodump">nanodump</a></b>, a low-level LSASS memory dumping tool for Windows. Built for research, red team tooling, and educational purposes.
 </p>
 
