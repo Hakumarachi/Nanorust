@@ -1,0 +1,14 @@
+[build]
+target = "x86_64-pc-windows-gnu"
+
+[target.i686-pc-windows-gnu]
+linker = "i686-w64-mingw32-gcc"
+rustflags = [
+    "-L/usr/i686-w64-mingw32/lib",
+    "-L/usr/lib/gcc/i686-w64-mingw32/10-win32",
+    "-lws2_32",
+    "-lkernel32",
+    "-luser32",
+    "-lntdll",
+    "-lmsvcrt",
+]

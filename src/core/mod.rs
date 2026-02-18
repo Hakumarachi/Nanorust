@@ -1,6 +1,7 @@
-pub mod process;
-pub(crate) mod privilege;
-pub(crate) mod handle;
-pub mod permission;
+pub mod structs;
+pub mod handle;
 pub mod dump;
-mod model;
+pub mod process;
+pub mod permission;
+pub mod privilege;
+pub mod process_instrumentation_callback;

@@ -1,16 +1,12 @@
-use std::process::exit;
-use log::{info, trace, warn, error, debug};
+use log::{debug, info, trace};
 use std::mem::size_of;
 use windows::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Foundation::UNICODE_STRING;
 
-use crate::nt::system::{get_process_image, query_system_info, NtQuerySystemInformationClasses};
-use crate::nt::model::SYSTEM_PROCESS_INFORMATION;
-use crate::core::model::ProcessInfo;
+use crate::core::process::model::ProcessInfo;
+use crate::core::structs::SYSTEM_PROCESS_INFORMATION;
+use crate::syscall::system::{get_process_image, query_system_info, NtQuerySystemInformationClasses};
 use crate::utils::utils::unicode_to_string;
-
-use nt_string::unicode_string;
-use nt_string::unicode_string::NtUnicodeString;
 
 pub static mut PROCESSES: Option<Vec<ProcessInfo>> = None;
 
@@ -18,6 +14,7 @@ pub static mut PROCESSES: Option<Vec<ProcessInfo>> = None;
 
 pub fn get_process_info() -> Option<()>{
     let buffer = query_system_info(NtQuerySystemInformationClasses::SYSTEM_PROCESS_INFORMATION)?;
+    debug!("buffer length: {}", buffer.len());
     let mut processes = Vec::new();
     let mut lprocesses = Vec::new();
     let mut offset = 0usize;
@@ -47,7 +44,7 @@ pub fn get_process_info() -> Option<()>{
 }
 
 pub fn get_process_image_file_name(hProcess : HANDLE) -> Option<String> {
-    let buffer = get_process_image(hProcess, 27);
+    let buffer = get_process_image(hProcess, 27, 300);
 
     unsafe {
         let buffer = buffer?;

@@ -1,6 +1,5 @@
 use std::arch::asm;
 use windows::Win32::Foundation::HANDLE;
-use crate::nt::dump::model::ProcessArchitecture::AMD64;
 
 pub const MINIDUMP_SIGNATURE: u32 = 0x504D444D; // 'MDMP'
 pub const MINIDUMP_VERSION: u16 = 42899;
@@ -9,53 +8,21 @@ pub const SIZE_OF_MINIDUMP_MODULE: usize = 108;
 pub const SIZE_OF_HEADER :usize = 32;
 pub const SIZE_OF_DIRECTORY :usize = 12;
 
-#[cfg(target_arch = "x86_64")]
 const PEB_OFFSET: usize = 0x60;
-
-#[cfg(target_arch = "x86")]
-const PEB_OFFSET: usize = 0x30;
 
 enum ProcessArchitecture {
     AMD64 = 9,
-    INTEL = 0,
 }
 
 // x64
-#[cfg(target_arch = "x86_64")]
 pub const PROCESS_PARAMETERS_OFFSET: usize = 0x20;
-#[cfg(target_arch = "x86_64")]
 pub const OS_MAJOR_VERSION_OFFSET: usize = 0x118;
-#[cfg(target_arch = "x86_64")]
 pub const OS_MINOR_VERSION_OFFSET: usize = 0x11C;
-#[cfg(target_arch = "x86_64")]
 pub const OS_BUILD_NUMBER_OFFSET: usize = 0x120;
-#[cfg(target_arch = "x86_64")]
 pub const OS_PLATFORM_ID_OFFSET: usize = 0x124;
-#[cfg(target_arch = "x86_64")]
 pub const CSD_VERSION_OFFSET: usize = 0x2e8;
-#[cfg(target_arch = "x86_64")]
-pub const PROCESSOR_ARCHITECTURE: usize = AMD64 as usize;
-#[cfg(target_arch = "x86_64")]
+pub const PROCESSOR_ARCHITECTURE: usize = ProcessArchitecture::AMD64 as usize;
 pub const SIZE_OF_SYSTEM_INFO_STREAM: usize = 48;
-
-// x86
-#[cfg(target_arch = "x86")]
-pub const PROCESS_PARAMETERS_OFFSET: usize = 0x10;
-#[cfg(target_arch = "x86")]
-pub const OS_MAJOR_VERSION_OFFSET: usize = 0xA4;
-#[cfg(target_arch = "x86")]
-pub const OS_MINOR_VERSION_OFFSET: usize = 0xA8;
-#[cfg(target_arch = "x86")]
-pub const OS_BUILD_NUMBER_OFFSET: usize = 0xAC;
-#[cfg(target_arch = "x86")]
-pub const OS_PLATFORM_ID_OFFSET: usize = 0xB0;
-#[cfg(target_arch = "x86")]
-pub const CSD_VERSION_OFFSET: usize = 0x1F0;
-#[cfg(target_arch = "x86")]
-pub const PROCESSOR_ARCHITECTURE: usize = INTEL as usize;
-#[cfg(target_arch = "x86")]
-pub const SIZE_OF_SYSTEM_INFO_STREAM: usize = 56;
-
 
 pub enum MiniDumpType {
     MiniDumpNormal = 0,
@@ -82,22 +49,8 @@ pub struct MiniDumpSystemInfo {
     pub csd_version_rva: u32,
     pub suite_mask: i16,
     pub reserved2: i16,
-    #[cfg(target_arch = "x86_64")]
     pub processor_features1: u64,
-    #[cfg(target_arch = "x86_64")]
     pub processor_features2: u64,
-    #[cfg(target_arch = "x86")]
-    pub vendor_id1: u32,
-    #[cfg(target_arch = "x86")]
-    pub vendor_id2: u32,
-    #[cfg(target_arch = "x86")]
-    pub vendor_id3: u32,
-    #[cfg(target_arch = "x86")]
-    pub version_information: u32,
-    #[cfg(target_arch = "x86")]
-    pub feature_information: u32,
-    #[cfg(target_arch = "x86")]
-    pub amd_extended_cpu_features: u32,
 }
 
 #[repr(C)]

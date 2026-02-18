@@ -1,9 +1,9 @@
+use windows::core::w;
 use windows::Win32::Foundation::{CloseHandle, LUID};
-use windows::Win32::Security::{AdjustTokenPrivileges, LookupPrivilegeValueW, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY, SE_PRIVILEGE_ENABLED, GetTokenInformation, TokenPrivileges, SE_DEBUG_NAME, LUID_AND_ATTRIBUTES};
+use windows::Win32::Security::{AdjustTokenPrivileges, GetTokenInformation, LookupPrivilegeValueW, TokenPrivileges, LUID_AND_ATTRIBUTES, SE_DEBUG_NAME, SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY};
 use windows::Win32::System::Threading::{
     GetCurrentProcess, OpenProcessToken,
 };
-use windows::core::{w};
 
 pub fn enable_debug_privilege() -> bool {
     unsafe {
@@ -33,7 +33,7 @@ pub fn enable_debug_privilege() -> bool {
         // 3️⃣ Activer le privilège
         let tp = TOKEN_PRIVILEGES {
             PrivilegeCount: 1,
-            Privileges: [windows::Win32::Security::LUID_AND_ATTRIBUTES {
+            Privileges: [LUID_AND_ATTRIBUTES {
                 Luid: luid,
                 Attributes: SE_PRIVILEGE_ENABLED,
             }],
@@ -91,7 +91,7 @@ pub fn is_debug_privilege_enabled() -> bool {
         let privileges = &*(buffer.as_ptr() as *const TOKEN_PRIVILEGES);
 
         let mut debug_luid = LUID::default();
-        if windows::Win32::Security::LookupPrivilegeValueW(
+        if LookupPrivilegeValueW(
             None,
             SE_DEBUG_NAME,
             &mut debug_luid,
