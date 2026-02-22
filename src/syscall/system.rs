@@ -1,11 +1,13 @@
 use crate::utils::utils::nt_success;
 use crate::core::structs::{CLIENT_ID, OBJECT_ATTRIBUTES};
-use crate::syscall::syscalls::{NtOpenProcess, NtQueryInformationProcess, NtQueryObject, NtQuerySystemInformation, NtQueryVirtualMemory, NtReadVirtualMemory};
+use crate::syscall::syscalls::{NtAdjustPrivilegesToken, NtOpenProcess, NtOpenProcessToken, NtQueryInformationProcess, NtQueryInformationToken, NtQueryObject, NtQuerySystemInformation, NtQueryVirtualMemory, NtReadVirtualMemory};
 use log::{error, debug};
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
 use std::ffi::c_void;
-use windows::Win32::Foundation::{HANDLE, STATUS_INFO_LENGTH_MISMATCH, STATUS_PARTIAL_COPY};
+use windows::Win32::Foundation::{HANDLE, NTSTATUS, STATUS_BUFFER_TOO_SMALL, STATUS_INFO_LENGTH_MISMATCH, STATUS_PARTIAL_COPY};
+use windows::Win32::Security::TOKEN_PRIVILEGES;
 use windows::Win32::System::Memory::MEMORY_BASIC_INFORMATION;
+use windows::Win32::System::Threading::GetCurrentProcess;
 
 pub struct NtQuerySystemInformationClasses;
 pub struct NtQueryObjectClasses;
@@ -131,33 +133,31 @@ pub fn get_process_handle(pid: usize, permissions: u32, attributes: u32) -> Opti
 }
 
 pub fn get_process_image(h_process: HANDLE, process_information_class: u32, mut size : u32) -> Option<Vec<u8>> {
-    unsafe {
-        let mut return_len = 0u32;
+    let mut return_len = 0u32;
 
-        loop {
-            let mut buffer = vec![0u8; size as usize];
+    loop {
+        let mut buffer = vec![0u8; size as usize];
 
 
-            let status = NtQueryInformationProcess(
-                h_process,
-                process_information_class,
-                buffer.as_mut_ptr() as _,
-                size,
-                &mut return_len,
-            );
+        let status = NtQueryInformationProcess(
+            h_process,
+            process_information_class,
+            buffer.as_mut_ptr() as _,
+            size,
+            &mut return_len,
+        );
 
-            if nt_success(status) {
-                return Some(buffer);
-            }
-
-            if status == STATUS_INFO_LENGTH_MISMATCH {
-                error!("Size: {}", size);
-                size = return_len;
-                continue;
-            }
-
-            return None;
+        if nt_success(status) {
+            return Some(buffer);
         }
+
+        if status == STATUS_INFO_LENGTH_MISMATCH {
+            error!("Size: {}", size);
+            size = return_len;
+            continue;
+        }
+
+        return None;
     }
 }
 
@@ -216,5 +216,80 @@ pub fn read_virtual_memory(h_process: HANDLE, base_addr: *mut c_void, size : usi
             }
             debug!("status: {:x}", status.0);
         }
+    None
+}
+
+pub fn open_process_token(h_process: HANDLE, desired_access: u32) -> Option<HANDLE> {
+
+    loop {
+        let mut h_token: HANDLE = HANDLE::default();
+        let status =
+            NtOpenProcessToken(
+                h_process,
+                desired_access,
+                &mut h_token,
+            )
+            ;
+
+        if nt_success(status) {
+            return Some(h_token)
+        } else {
+            debug!("NtOpenProcessToken returned an error");
+            debug!("status: {:x}", status.0);
+        }
+    }
+    None
+}
+
+pub fn query_information_token(t_process: HANDLE, token_information_class: u32, mut size : u32) -> Option<(Vec<u8>, u32)> {
+    let mut return_len = 0u32;
+
+    loop {
+        let mut buffer = vec![0u8; size as usize];
+
+
+        let status = NtQueryInformationToken(
+            t_process,
+            token_information_class,
+            buffer.as_mut_ptr() as _,
+            size,
+            &mut return_len,
+        );
+
+        if nt_success(status) {
+            return Some((buffer, return_len));
+        }
+
+        if status == STATUS_BUFFER_TOO_SMALL {
+            size = return_len;
+            continue;
+        }
+        debug!("status: {:x}", status.0);
+    }
+    None
+}
+
+pub fn adjust_privileges_token(t_process: HANDLE, disable_all_privileges: bool, new_state: &mut TOKEN_PRIVILEGES, size: u32) -> Option<(Vec<u8>, u32)> {
+    let mut return_len = 0u32;
+
+    loop {
+        let mut buffer = vec![0u8; size as usize];
+
+
+        let status = NtAdjustPrivilegesToken(
+            t_process,
+            disable_all_privileges,
+            new_state,
+            size,
+            buffer.as_mut_ptr() as _,
+            &mut return_len,
+        );
+
+        if nt_success(status) {
+            return Some((buffer, return_len));
+        }
+
+        debug!("status: {:x}", status.0);
+    }
     None
 }

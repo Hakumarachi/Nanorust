@@ -4,7 +4,7 @@ use crate::syscall::runner::run_syscall10;
 use ntapi::ntmmapi::MEMORY_INFORMATION_CLASS;
 use std::ffi::c_void;
 use windows::Win32::Foundation::{HANDLE, NTSTATUS};
-
+use windows::Win32::Security::{TOKEN_INFORMATION_CLASS, TOKEN_PRIVILEGES};
 
 pub fn NtQuerySystemInformation(
     system_information_class: u32,
@@ -199,4 +199,75 @@ pub fn NtSetInformationProcess(
 }
 
 
-pub const NT_CURRENT_PROCESS: HANDLE = HANDLE(-1isize as *mut c_void);
+pub fn NtOpenProcessToken(
+    process_handle: HANDLE,
+    desired_access: u32,
+    token_handle: &mut HANDLE,
+) -> NTSTATUS {
+    unsafe {
+        let syscall = get_syscall("NtOpenProcessToken");
+        let args: [usize; 10] = [
+            process_handle.0 as _,
+            desired_access as _,
+            token_handle as *mut HANDLE as _,
+            0,0,0,0,0,0,0
+        ];
+        let ret = run_syscall10(syscall.p_address, args);
+        NTSTATUS{
+            0: ret
+        }
+    }
+}
+
+pub fn NtQueryInformationToken(
+    token_handle: HANDLE,
+    token_information_class: u32,
+    token_information: *mut c_void,
+    token_information_length: u32,
+    return_length: *mut u32,
+) -> NTSTATUS {
+    unsafe {
+        let syscall = get_syscall("NtQueryInformationToken");
+        let args: [usize; 10] = [
+            token_handle.0 as _,
+            token_information_class as _,
+            token_information as _,
+            token_information_length as _,
+            return_length as _,
+            0,0,0,0,0
+        ];
+        let ret = run_syscall10(syscall.p_address, args);
+        NTSTATUS{
+            0: ret
+        }
+    }
+}
+
+pub fn NtAdjustPrivilegesToken(
+    token_handle: HANDLE,
+    disable_all_privileges: bool,
+    new_state: &mut TOKEN_PRIVILEGES,
+    buffer_length: u32,
+    previous_state : *mut c_void,
+    return_length: *mut u32,
+)-> NTSTATUS {
+    unsafe {
+        let syscall = get_syscall("NtAdjustPrivilegesToken");
+        let args: [usize; 10] = [
+            token_handle.0 as _,
+            disable_all_privileges as _,
+            new_state as *mut _ as _,
+            buffer_length as _,
+            previous_state as _,
+            return_length as _,
+            0,0,0,0
+        ];
+        let ret = run_syscall10(syscall.p_address, args);
+        NTSTATUS{
+            0: ret
+        }
+    }
+}
+
+
+pub const NtCurrentProcess: HANDLE = HANDLE(-1isize as *mut c_void);

@@ -8,7 +8,7 @@ mod syscall;
 use crate::cli::parser::parse_args;
 use crate::core::handle::obtain::open_handle_to_lsass;
 use crate::core::permission::get_lsass_min_permissions;
-use crate::core::privilege::{enable_debug_privilege, is_debug_privilege_enabled};
+use crate::core::token::privilege::{enable_debug_privilege, is_debug_privilege_enabled};
 use crate::core::process::get_pid_by_name_nt;
 use crate::core::dump::nanodump::nano_dump_write_dump;
 use crate::core::process_instrumentation_callback::remove_syscall_callback_hook;
@@ -80,8 +80,7 @@ fn main() {
     debug!("========== ENABLING DEBUG PRIVILEGES ==========");
     info!("Trying to enable debug privileges...");
     
-    enable_debug_privilege();
-    if is_debug_privilege_enabled() {
+    if enable_debug_privilege() {
         info!("  -> Debug privilege successfully enabled");
     } else {
         error!("Debug privilege not enabled");
