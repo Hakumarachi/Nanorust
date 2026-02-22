@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 use std::ptr::null_mut;
 use log::{debug, error};
-use crate::syscall::syscalls::{NtSetInformationProcess, NT_CURRENT_PROCESS};
+use crate::syscall::syscalls::{NtSetInformationProcess, NtCurrentProcess};
 use crate::utils::utils::nt_success;
 
 const PROCESS_INSTRUMENTATION_CALLBACK: u32 = 40;
@@ -23,7 +23,7 @@ pub fn remove_syscall_callback_hook() -> bool {
         };
 
         let status = NtSetInformationProcess(
-            NT_CURRENT_PROCESS,
+            NtCurrentProcess,
             PROCESS_INSTRUMENTATION_CALLBACK,
             &mut info as *mut _ as *mut c_void,
             size_of::<ProcessInstrumentationCallbackInformation>() as u32,
